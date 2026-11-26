@@ -1,0 +1,26 @@
+# secrets
+.env
+*.token
+hf_token*
+
+# Python / notebooks
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.pytest_cache/
+
+# model weights and checkpoints (too big for git; adapters go to the Hugging Face Hub)
+checkpoints/
+*.safetensors
+*.bin
+*.pt
+
+# raw fine-tuning corpora (licences + size); only scripts are committed
+data/finetune/*
+!data/finetune/.gitkeep
+
+# quick smoke-test outputs
+outputs/*_limit*/
+
+# editor
+.vscode/

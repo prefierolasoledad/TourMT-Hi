@@ -1,0 +1,14 @@
+# Zero-shot baseline (plan section 5.1). Run: python src/translate.py --config configs/it2-200m_flores-devtest_hi-en.yaml
+run_name: it2-200m_flores-devtest_hi-en
+model: ai4bharat/indictrans2-indic-en-dist-200M
+model_family: indictrans2
+test_set: flores
+split: devtest
+direction: hi-en
+decoding:
+  num_beams: 4
+  max_length: 256
+  batch_size: 16
+fp16: true
+seed: 42
+output_root: outputs

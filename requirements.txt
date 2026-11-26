@@ -1,0 +1,16 @@
+# torch is NOT listed: use the version Colab/Kaggle already provides (it matches their CUDA).
+# Exact versions will be pinned after the first full run (see meta.json -> versions).
+transformers
+datasets
+sentencepiece
+sacremoses
+pyyaml
+pandas
+sacrebleu
+# IndicTrans2 pre/post-processing
+IndicTransToolkit
+# Later steps (evaluation, fine-tuning):
+# unbabel-comet
+# peft
+# accelerate
+# indic-nlp-library

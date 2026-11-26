@@ -1,0 +1,14 @@
+# Zero-shot baseline (plan section 5.1). Run: python src/translate.py --config configs/nllb600m_flores-devtest_en-hi.yaml
+run_name: nllb600m_flores-devtest_en-hi
+model: facebook/nllb-200-distilled-600M
+model_family: nllb
+test_set: flores
+split: devtest
+direction: en-hi
+decoding:
+  num_beams: 4
+  max_length: 256
+  batch_size: 16
+fp16: true
+seed: 42
+output_root: outputs
