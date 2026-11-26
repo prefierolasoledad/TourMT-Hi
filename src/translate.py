@@ -42,32 +42,35 @@ def set_seed(seed: int) -> None:
 class NLLBTranslator:
     """NLLB-200: the target language is chosen by forcing its language tag as the first output token."""
 
-    def __init__(self, model_name: str, src: str, tgt: str, fp16: bool, device: str):
+    def __init__(self, model_name: str, src: str, tgt: str, fp16: bool, device: str,
+                 revision: str | None = None):
         from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
-        self.tok = AutoTokenizer.from_pretrained(model_name, src_lang=LANG_CODES[src])
-        model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+        self.tok = AutoTokenizer.from_pretrained(model_name, src_lang=LANG_CODES[src], revision=revision)
+        model = AutoModelForSeq2SeqLM.from_pretrained(model_name, revision=revision)
         if fp16 and device == "cuda":
             model = model.half()  # half precision: half the memory, faster on a T4
         self.model = model.to(device).eval()
         self.device = device
         self.tgt_token_id = self.tok.convert_tokens_to_ids(LANG_CODES[tgt])
 
-    def translate_batch(self, sentences: list[str], num_beams: int, max_length: int) -> list[str]:
+    def translate_batch(self, sentences: list[str], num_beams: int, max_length: int,
+                        use_cache: bool = True) -> list[str]:
         import torch
 
         inputs = self.tok(sentences, return_tensors="pt", padding=True, truncation=True,
                           max_length=max_length).to(self.device)
         with torch.inference_mode():
             out = self.model.generate(**inputs, forced_bos_token_id=self.tgt_token_id,
-                                      num_beams=num_beams, max_length=max_length)
+                                      num_beams=num_beams, max_length=max_length, use_cache=use_cache)
         return self.tok.batch_decode(out, skip_special_tokens=True)
 
 
 class IndicTrans2Translator:
     """IndicTrans2: needs IndicTransToolkit for pre/post-processing (adds language tags, script handling)."""
 
-    def __init__(self, model_name: str, src: str, tgt: str, fp16: bool, device: str):
+    def __init__(self, model_name: str, src: str, tgt: str, fp16: bool, device: str,
+                 revision: str | None = None):
         from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
         try:
@@ -79,14 +82,17 @@ class IndicTrans2Translator:
 
         self.src_code, self.tgt_code = LANG_CODES[src], LANG_CODES[tgt]
         self.ip = IndicProcessor(inference=True)
-        self.tok = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-        model = AutoModelForSeq2SeqLM.from_pretrained(model_name, trust_remote_code=True)
+        # trust_remote_code runs model code downloaded from Hugging Face; `revision` pins the exact
+        # commit so the code (and weights) cannot change silently between runs.
+        self.tok = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True, revision=revision)
+        model = AutoModelForSeq2SeqLM.from_pretrained(model_name, trust_remote_code=True, revision=revision)
         if fp16 and device == "cuda":
             model = model.half()
         self.model = model.to(device).eval()
         self.device = device
 
-    def translate_batch(self, sentences: list[str], num_beams: int, max_length: int) -> list[str]:
+    def translate_batch(self, sentences: list[str], num_beams: int, max_length: int,
+                        use_cache: bool = True) -> list[str]:
         import torch
 
         batch = self.ip.preprocess_batch(sentences, src_lang=self.src_code, tgt_lang=self.tgt_code)
@@ -94,7 +100,7 @@ class IndicTrans2Translator:
                           max_length=max_length, return_attention_mask=True).to(self.device)
         with torch.inference_mode():
             out = self.model.generate(**inputs, num_beams=num_beams, max_length=max_length,
-                                      min_length=0, use_cache=True)
+                                      min_length=0, use_cache=use_cache)
         decoded = self.tok.batch_decode(out, skip_special_tokens=True,
                                         clean_up_tokenization_spaces=True)
         return self.ip.postprocess_batch(decoded, lang=self.tgt_code)
@@ -137,7 +143,7 @@ def main() -> None:
     print(f"{cfg['run_name']}: {len(sources)} sentences, {cfg['direction']}, model {cfg['model']} on {device}")
 
     translator_cls = {"nllb": NLLBTranslator, "indictrans2": IndicTrans2Translator}[cfg["model_family"]]
-    translator = translator_cls(cfg["model"], src, tgt, cfg["fp16"], device)
+    translator = translator_cls(cfg["model"], src, tgt, cfg["fp16"], device, revision=cfg["revision"])
 
     dec = cfg["decoding"]
     sorted_src, order = sort_by_length(sources)
@@ -145,7 +151,7 @@ def main() -> None:
     start = time.time()
     for i in range(0, len(sorted_src), dec["batch_size"]):
         batch = sorted_src[i : i + dec["batch_size"]]
-        sorted_hyps.extend(translator.translate_batch(batch, dec["num_beams"], dec["max_length"]))
+        sorted_hyps.extend(translator.translate_batch(batch, dec["num_beams"], dec["max_length"], dec["use_cache"]))
         print(f"  {min(i + dec['batch_size'], len(sorted_src))}/{len(sorted_src)}", end="\r")
     seconds = time.time() - start
     hyps = restore_order(sorted_hyps, order)

@@ -2,6 +2,7 @@
 run_name: it2-200m_flores-devtest_en-hi
 model: ai4bharat/indictrans2-en-indic-dist-200M
 model_family: indictrans2
+revision: 2cfd0a20057756d756bf3e53528f492afc52f91a  # pinned model commit (code + weights)
 test_set: flores
 split: devtest
 direction: en-hi
@@ -9,6 +10,7 @@ decoding:
   num_beams: 4
   max_length: 256
   batch_size: 16
+  use_cache: false  # IndicTrans2's remote code breaks with the new transformers cache; output is identical, only slower
 fp16: true
 seed: 42
 output_root: outputs
