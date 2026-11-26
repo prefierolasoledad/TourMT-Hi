@@ -27,7 +27,8 @@ def test_sort_and_restore_roundtrip():
 
 
 def test_all_configs_are_valid():
-    configs = sorted((ROOT / "configs").glob("*.yaml"))
+    # translation configs only (wikivoyage.yaml configures data collection, not a model run)
+    configs = sorted(p for p in (ROOT / "configs").glob("*.yaml") if p.name != "wikivoyage.yaml")
     assert configs, "no configs found"
     names = set()
     for path in configs:

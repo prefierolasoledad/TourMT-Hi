@@ -9,6 +9,10 @@ pyyaml
 pandas
 sacrebleu
 
+# Tourism test set collection (collect_wikivoyage.py)
+beautifulsoup4
+pysbd
+
 # Later steps:
 # IndicTransToolkit   # needs transformers<5 -> will go in the separate environment
 # (GlotLID language ID runs in the separate environment: requirements-eval.txt)

@@ -1,0 +1,42 @@
+# Tourism test set: source pages and selection settings (plan section 4.2).
+# Run: python src/collect_wikivoyage.py --config configs/wikivoyage.yaml
+#
+# Destinations are English Wikivoyage page titles (licence CC BY-SA 4.0), spread across regions.
+# Destinations NOT listed here may later be used for back-translation training data (plan 4.3),
+# so the two never overlap.
+destinations:
+  north:   [Varanasi, Agra, Amritsar, Rishikesh, Shimla, Leh]
+  west:    [Jaipur, Udaipur, Jaisalmer]
+  east:    [Darjeeling, Puri, Bodh Gaya, Shillong]
+  south:   [Hampi, Mysore, Kochi, Alappuzha, Madurai, Pondicherry]
+  central: [Khajuraho]
+
+# Sentence filters
+min_words: 5
+max_words: 40
+include_listings: true   # sentences from listing descriptions (restaurants, hotels...): most prices/opening times are here
+
+# Category guess from the Wikivoyage section (you confirm or correct every one by hand).
+# Sentences mentioning prices or opening times get "prices_times" whatever their section.
+section_categories:
+  Understand: history
+  Get in: transport
+  Get around: transport
+  See: culture_religion
+  Do: culture_religion
+  See and do: culture_religion
+  Buy: prices_times
+  Fees and permits: prices_times
+  Eat: food
+  Drink: food
+  Sleep: accommodation
+  Stay safe: safety_advice
+  Stay healthy: safety_advice
+  Respect: safety_advice
+  Cope: safety_advice
+  Connect: safety_advice
+  # Not used (category 'other', left out of the shortlist): Go next, Learn, Talk, Work, Districts, Nearby
+
+# Balanced shortlist for manual selection: more than the 300 needed, so weak sentences can be rejected
+shortlist_size: 450
+seed: 42

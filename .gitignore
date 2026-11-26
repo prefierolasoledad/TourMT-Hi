@@ -24,3 +24,6 @@ outputs/*_limit*/
 
 # editor
 .vscode/
+
+# downloaded Wikivoyage pages (re-downloadable: revisions are pinned in data/tourism_test/wikivoyage_revisions.tsv)
+data/tourism_test/raw/
