@@ -1,0 +1,12 @@
+# Separate Python 3.11 environment for evaluation (and later IndicTrans2).
+# Why: unbabel-comet 2.2.7 (latest) needs transformers<5, numpy<2 and huggingface-hub<1.0,
+# which cannot be installed next to Colab's own Python 3.13 / transformers 5.
+#
+# Created in the Colab notebook with:
+#   uv venv /content/venv-eval --python 3.11
+#   uv pip install --python /content/venv-eval/bin/python -r requirements-eval.txt
+torch
+unbabel-comet==2.2.7
+sacrebleu
+indic-nlp-library
+pyyaml

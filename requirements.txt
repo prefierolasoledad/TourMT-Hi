@@ -1,21 +1,16 @@
+# Main environment (Colab's own Python) for translation with NLLB.
 # torch is NOT listed: use the version Colab/Kaggle already provides (it matches their CUDA).
-# Exact versions will be pinned after the first full run (see meta.json -> versions).
-
-# Translation
+# Evaluation (COMET) runs in a separate environment: see requirements-eval.txt.
 transformers
 datasets
 sentencepiece
 sacremoses
 pyyaml
 pandas
-IndicTransToolkit      # IndicTrans2 pre/post-processing
-
-# Evaluation
 sacrebleu
-unbabel-comet
-indic-nlp-library      # Hindi normalisation
 
 # Later steps:
+# IndicTransToolkit   # needs transformers<5 -> will go in the separate environment
 # fasttext            # GlotLID language ID for the Maithili off-target check
 # peft
 # accelerate
