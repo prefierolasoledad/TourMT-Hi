@@ -1,0 +1,27 @@
+{
+  "split": "devtest",
+  "glotlid_file": "model_v4.bin",
+  "glotlid_revision": "e9592e0a9bc3b6f2a946de94faaa188d1dd6f522",
+  "languages": {
+    "hi": {
+      "n": 1012,
+      "correct_rate": 1.0,
+      "as_hindi": 1.0,
+      "as_maithili": 0.0,
+      "label_counts": {
+        "__label__hin_Deva": 1012
+      }
+    },
+    "mai": {
+      "n": 1012,
+      "correct_rate": 0.9911,
+      "as_hindi": 0.0069,
+      "as_maithili": 0.9911,
+      "label_counts": {
+        "__label__mai_Deva": 1003,
+        "__label__hin_Deva": 7,
+        "__label__bho_Deva": 2
+      }
+    }
+  }
+}

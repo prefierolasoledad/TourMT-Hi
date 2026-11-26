@@ -1,0 +1,15 @@
+{
+  "n_sentences": 1012,
+  "seconds": 90.7,
+  "device": "cuda",
+  "gpu": "Tesla T4",
+  "versions": {
+    "python": "3.13.16",
+    "torch": "2.14.1+cu130",
+    "transformers": "5.22.1",
+    "datasets": "4.8.5",
+    "sentencepiece": "0.2.2",
+    "IndicTransToolkit": "not installed"
+  },
+  "finished_at": "2026-11-26 14:03:02"
+}

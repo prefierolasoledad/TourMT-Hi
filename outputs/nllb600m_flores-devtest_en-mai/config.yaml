@@ -1,0 +1,16 @@
+run_name: nllb600m_flores-devtest_en-mai
+model: facebook/nllb-200-distilled-600M
+model_family: nllb
+test_set: flores
+split: devtest
+direction: en-mai
+decoding:
+  num_beams: 4
+  max_length: 256
+  batch_size: 16
+  use_cache: true
+fp16: true
+seed: 42
+output_root: outputs
+revision: null
+limit: null

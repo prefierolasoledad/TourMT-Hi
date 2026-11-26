@@ -1,0 +1,27 @@
+{
+  "run_name": "it2-200m_flores-devtest_en-mai",
+  "model": "ai4bharat/indictrans2-en-indic-dist-200M",
+  "test_set": "flores",
+  "split": "devtest",
+  "direction": "en-mai",
+  "n_sentences": 1012,
+  "normalization": "indicnlp-hi (nukta + alternative forms)",
+  "chrF++": 50.31,
+  "BLEU": 18.08,
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:2|space:no|version:2.6.0",
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+  "COMET": 0.6704,
+  "CometKiwi": 0.6954,
+  "off_target_rate": 0.0119,
+  "hindi_rate": 0.0089,
+  "lid_label_counts": {
+    "__label__mai_Deva": 1000,
+    "__label__hin_Deva": 9,
+    "__label__anp_Deva": 2,
+    "__label__bho_Deva": 1
+  },
+  "lid_model": "cis-lmu/glotlid/model_v4.bin@e9592e0a",
+  "comet_model": "Unbabel/wmt22-comet-da",
+  "kiwi_model": "Unbabel/wmt22-cometkiwi-da",
+  "evaluated_at": "2026-11-26 14:08:52"
+}

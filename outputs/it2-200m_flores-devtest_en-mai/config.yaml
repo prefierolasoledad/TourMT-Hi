@@ -1,0 +1,16 @@
+run_name: it2-200m_flores-devtest_en-mai
+model: ai4bharat/indictrans2-en-indic-dist-200M
+model_family: indictrans2
+revision: 2cfd0a20057756d756bf3e53528f492afc52f91a
+test_set: flores
+split: devtest
+direction: en-mai
+decoding:
+  num_beams: 4
+  max_length: 256
+  batch_size: 16
+  use_cache: false
+fp16: true
+seed: 42
+output_root: outputs
+limit: null
