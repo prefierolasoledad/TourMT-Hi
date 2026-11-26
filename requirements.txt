@@ -1,16 +1,21 @@
 # torch is NOT listed: use the version Colab/Kaggle already provides (it matches their CUDA).
 # Exact versions will be pinned after the first full run (see meta.json -> versions).
+
+# Translation
 transformers
 datasets
 sentencepiece
 sacremoses
 pyyaml
 pandas
+IndicTransToolkit      # IndicTrans2 pre/post-processing
+
+# Evaluation
 sacrebleu
-# IndicTrans2 pre/post-processing
-IndicTransToolkit
-# Later steps (evaluation, fine-tuning):
-# unbabel-comet
+unbabel-comet
+indic-nlp-library      # Hindi normalisation
+
+# Later steps:
+# fasttext            # GlotLID language ID for the Maithili off-target check
 # peft
 # accelerate
-# indic-nlp-library
