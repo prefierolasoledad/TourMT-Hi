@@ -1,0 +1,18 @@
+{
+  "run_name": "nllb600m_flores-devtest_en-hi",
+  "model": "facebook/nllb-200-distilled-600M",
+  "test_set": "flores",
+  "split": "devtest",
+  "direction": "en-hi",
+  "n_sentences": 1012,
+  "normalization": "indicnlp-hi (nukta + alternative forms)",
+  "chrF++": 54.46,
+  "BLEU": 31.19,
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:2|space:no|version:2.6.0",
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+  "COMET": 0.8004,
+  "CometKiwi": 0.8403,
+  "comet_model": "Unbabel/wmt22-comet-da",
+  "kiwi_model": "Unbabel/wmt22-cometkiwi-da",
+  "evaluated_at": "2026-11-26 13:14:21"
+}
