@@ -52,6 +52,24 @@ def load_config(path: str | Path) -> dict:
     return cfg
 
 
+def check_indicnlp_normalizer() -> None:
+    """Stop if the installed `indicnlp` package is the broken fork.
+
+    `indic-nlp-library-itt` (pulled in by IndicTransToolkit's dependencies) writes the nukta as the
+    literal text "\\u093C" instead of the character, corrupting Hindi text. Only the official
+    `indic-nlp-library` must be installed (install IndicTransToolkit with --no-deps).
+    """
+    from indicnlp.normalize.indic_normalize import IndicNormalizerFactory
+
+    normalizer = IndicNormalizerFactory().get_normalizer("hi")
+    out = normalizer.normalize("ड़")  # ड़ as one code point -> should become ड + nukta characters
+    if "\\" in out or out != "ड़":
+        raise RuntimeError(
+            f"Broken indicnlp normaliser (got {out!r}). Uninstall 'indic-nlp-library-itt' and install "
+            "'indic-nlp-library'; install IndicTransToolkit with --no-deps."
+        )
+
+
 def sort_by_length(sentences: list[str]) -> tuple[list[str], list[int]]:
     """Sort sentences longest-first so each batch has similar lengths (less padding, faster).
 

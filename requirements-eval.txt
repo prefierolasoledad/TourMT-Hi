@@ -1,10 +1,17 @@
-# Separate Python 3.11 environment for evaluation (and later IndicTrans2).
-# Why: unbabel-comet 2.2.7 (latest) needs transformers<5, numpy<2 and huggingface-hub<1.0,
-# which cannot be installed next to Colab's own Python 3.13 / transformers 5.
+# Separate Python 3.11 environment for evaluation (COMET) and IndicTrans2.
+# Why: unbabel-comet 2.2.7 (latest) and IndicTransToolkit need transformers<5 (COMET also numpy<2,
+# huggingface-hub<1.0), which cannot be installed next to Colab's own Python 3.13 / transformers 5.
 #
-# Created in the Colab notebook with:
+# Created in the Colab notebook (Cell 2b) with:
 #   uv venv /content/venv-eval --python 3.11
 #   uv pip install --python /content/venv-eval/bin/python -r requirements-eval.txt
+#   uv pip install --python /content/venv-eval/bin/python --no-deps IndicTransToolkit==1.1.1
+#
+# IndicTransToolkit is installed with --no-deps ON PURPOSE: its dependency 'indic-nlp-library-itt'
+# replaces the official 'indicnlp' package with a fork that corrupts nukta characters (writes the
+# literal text "़"). src/common.py:check_indicnlp_normalizer() stops the run if that happens.
+
+# Evaluation
 torch
 unbabel-comet==2.2.7
 sacrebleu
@@ -12,3 +19,10 @@ indic-nlp-library
 pyyaml
 # COMET's old torchmetrics (<0.11) imports pkg_resources, which only older setuptools still provide
 setuptools<81
+
+# IndicTrans2 translation (translate.py) - IndicTransToolkit's own dependencies, minus the fork
+datasets
+sentencepiece
+sacremoses
+regex
+tqdm

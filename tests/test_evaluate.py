@@ -47,3 +47,10 @@ def test_chrf_and_bleu_perfect_match():
     s = string_metrics(sents, sents)
     assert s["chrF++"] == 100.0 and s["BLEU"] == 100.0
     assert "nrefs:1" in s["bleu_signature"]
+
+
+def test_installed_indicnlp_is_not_the_broken_fork():
+    pytest.importorskip("indicnlp")
+    from common import check_indicnlp_normalizer
+
+    check_indicnlp_normalizer()  # raises RuntimeError if indic-nlp-library-itt replaced indicnlp

@@ -25,7 +25,7 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import LANG_CODES, load_config, parse_direction, restore_order, sort_by_length  # noqa: E402
+from common import LANG_CODES, check_indicnlp_normalizer, load_config, parse_direction, restore_order, sort_by_length  # noqa: E402
 from data import load_pair  # noqa: E402
 
 
@@ -74,6 +74,8 @@ class IndicTrans2Translator:
             from IndicTransToolkit.processor import IndicProcessor
         except ImportError:
             from IndicTransToolkit import IndicProcessor
+
+        check_indicnlp_normalizer()  # IndicProcessor normalises Indic input with indicnlp
 
         self.src_code, self.tgt_code = LANG_CODES[src], LANG_CODES[tgt]
         self.ip = IndicProcessor(inference=True)

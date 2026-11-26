@@ -33,7 +33,7 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import parse_direction  # noqa: E402
+from common import check_indicnlp_normalizer, parse_direction  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DEVANAGARI_TARGETS = {"hi", "mai"}
@@ -76,6 +76,7 @@ def make_normalizer(tgt: str, enabled: bool):
         return (lambda s: s), "none"
     from indicnlp.normalize.indic_normalize import IndicNormalizerFactory
 
+    check_indicnlp_normalizer()
     # Hindi rules are used for Maithili too: same Devanagari script and the same character variants.
     normalizer = IndicNormalizerFactory().get_normalizer("hi")
     return normalizer.normalize, "indicnlp-hi (nukta + alternative forms)"
