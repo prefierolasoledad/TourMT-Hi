@@ -17,6 +17,7 @@ Metrics (plan section 6.1):
     COMET     Unbabel/wmt22-comet-da (uses source + reference)
     CometKiwi Unbabel/wmt22-cometkiwi-da (source only, no reference; gated on Hugging Face)
     off_target_rate  for Maithili targets only: share of outputs GlotLID does not label as Maithili
+    hindi_rate       for Maithili targets only: share of outputs GlotLID labels as Hindi
 
 Normalisation: for Devanagari targets (hi, mai), references and outputs are normalised with
 indic-nlp-library before every metric; the setting is saved with the scores.
@@ -34,16 +35,16 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import check_indicnlp_normalizer, parse_direction  # noqa: E402
+from lid import GLOTLID_FILE, GLOTLID_REVISION, off_target, predict_labels  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DEVANAGARI_TARGETS = {"hi", "mai"}
 COMET_MODEL = "Unbabel/wmt22-comet-da"
 KIWI_MODEL = "Unbabel/wmt22-cometkiwi-da"
-GLOTLID_REPO = "cis-lmu/glotlid"
 
 RESULT_COLUMNS = [
     "run_name", "model", "test_set", "split", "direction", "n_sentences",
-    "chrF++", "BLEU", "COMET", "CometKiwi", "off_target_rate",
+    "chrF++", "BLEU", "COMET", "CometKiwi", "off_target_rate", "hindi_rate",
     "normalization", "chrf_signature", "bleu_signature", "evaluated_at",
 ]
 
@@ -121,17 +122,6 @@ def comet_scores(model_name: str, srcs: list[str], hyps: list[str], refs: list[s
     return round(float(out.system_score), 4), [round(float(x), 4) for x in out.scores]
 
 
-def off_target_rate(hyps: list[str], expected_label: str = "__label__mai_Deva") -> tuple[float, list[str]]:
-    """Share of outputs that GlotLID does not identify as the expected language."""
-    import fasttext
-    from huggingface_hub import hf_hub_download
-
-    model = fasttext.load_model(hf_hub_download(GLOTLID_REPO, "model.bin"))
-    labels = [model.predict(h.replace("\n", " "))[0][0] for h in hyps]
-    wrong = sum(1 for lab in labels if lab != expected_label)
-    return round(wrong / len(hyps), 4), labels
-
-
 # ---------- results table ----------
 
 def upsert_results(csv_path: Path, row: dict) -> None:
@@ -177,8 +167,13 @@ def evaluate_run(run_dir: Path, args) -> dict:
         scores["CometKiwi"], segments["CometKiwi"] = comet_scores(KIWI_MODEL, srcs, hyps, None, args.batch_size)
         print(f"  CometKiwi {scores['CometKiwi']}")
     if tgt_lang == "mai" and not args.no_lid:
-        scores["off_target_rate"], segments["lid_label"] = off_target_rate(run["hyp"])
-        print(f"  off-target rate {scores['off_target_rate']}")
+        labels = predict_labels(run["hyp"])  # raw outputs, not normalised
+        ot = off_target(labels, "mai")
+        scores["off_target_rate"], scores["hindi_rate"] = ot["off_target_rate"], ot["hindi_rate"]
+        scores["lid_label_counts"] = ot["label_counts"]
+        scores["lid_model"] = f"cis-lmu/glotlid/{GLOTLID_FILE}@{GLOTLID_REVISION[:8]}"
+        segments["lid_label"] = labels
+        print(f"  off-target rate {scores['off_target_rate']}  (labelled Hindi: {scores['hindi_rate']})")
     if not args.no_comet:
         scores["comet_model"] = COMET_MODEL
     if not args.no_kiwi:
@@ -204,6 +199,8 @@ def main() -> None:
     parser.add_argument("--no-comet", dest="no_comet", action="store_true", help="skip COMET")
     parser.add_argument("--no-kiwi", dest="no_kiwi", action="store_true", help="skip CometKiwi")
     parser.add_argument("--no-lid", dest="no_lid", action="store_true", help="skip Maithili off-target check")
+    parser.add_argument("--skip-scored", dest="skip_scored", action="store_true",
+                        help="skip runs that already have scores.json")
     parser.add_argument("--no-normalize", dest="no_normalize", action="store_true",
                         help="skip Indic normalisation (only for checking its effect)")
     args = parser.parse_args()
@@ -212,6 +209,11 @@ def main() -> None:
     skipped = [r for r in args.runs if not (Path(r) / "hyp.txt").exists()]
     if skipped:
         print(f"Skipping folders without hyp.txt: {skipped}")
+    if args.skip_scored:
+        done = [r for r in run_dirs if (r / "scores.json").exists()]
+        if done:
+            print(f"Already scored, skipping: {[r.name for r in done]}")
+        run_dirs = [r for r in run_dirs if r not in done]
     if not run_dirs:
         sys.exit("No run folders to evaluate.")
     for run_dir in run_dirs:

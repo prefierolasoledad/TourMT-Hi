@@ -11,6 +11,6 @@ sacrebleu
 
 # Later steps:
 # IndicTransToolkit   # needs transformers<5 -> will go in the separate environment
-# fasttext            # GlotLID language ID for the Maithili off-target check
+# (GlotLID language ID runs in the separate environment: requirements-eval.txt)
 # peft
 # accelerate
