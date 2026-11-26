@@ -10,3 +10,5 @@ unbabel-comet==2.2.7
 sacrebleu
 indic-nlp-library
 pyyaml
+# COMET's old torchmetrics (<0.11) imports pkg_resources, which only older setuptools still provide
+setuptools<81
