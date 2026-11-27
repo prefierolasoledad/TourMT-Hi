@@ -40,3 +40,6 @@ section_categories:
 # Balanced shortlist for manual selection: more than the 300 needed, so weak sentences can be rejected
 shortlist_size: 450
 seed: 42
+# At least this share of each category's shortlist contains a number (price, time, distance...),
+# because numbers and units are a known MT weak spot (plan 4.2: keep them on purpose).
+number_share: 0.4

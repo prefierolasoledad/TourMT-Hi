@@ -1,0 +1,58 @@
+# Fine-tuning data, arm A (plan section 4.3): tourism-like English-Hindi pairs from public corpora.
+# Run: python src/build_finetune_data.py --config configs/finetune_arm_a.yaml
+#
+# NOTE for the report: IndicTrans2 was already trained on both sources (IndicTrans2 paper, Sec. 5.1 and
+# Table 1: ILCI 165.6K en-hi pairs incl. a tourism domain; Samanantar 4.4M). Arm A therefore tests
+# whether RE-EMPHASISING seen in-domain data helps. Arm B (later) uses new, unseen synthetic data.
+name: arm_a
+
+sources:
+  ilci:        # human-translated; domains health, tourism, agriculture, entertainment. Licence CC0.
+    repo: ai4bharat/BPCC            # gated: accept the terms on Hugging Face first
+    file: ilci/hin_Deva.tsv
+    revision: 5bde309374f21c39e7c3d505f28ae11f58f2a220
+  samanantar:  # mined from the web; noisier. Licence CC0 (as part of BPCC).
+    repo: ai4bharat/samanantar
+    config: hi
+    revision: ead34c5b22a0354d350e7dfdd6aece7df5a48f37
+    max_rows: null                  # null = read all ~4.4M pairs (1.9 GB download); a number = stop early
+
+# A pair is "tourism-like" if its English side (whole words, case-insensitive)
+#   - contains at least one CORE keyword (clearly about travel/visiting),
+#   - contains at least min_keyword_hits CORE + SUPPORT keywords in total, and
+#   - contains NO negative keyword (Samanantar is mostly news; these words mark news reports).
+min_keyword_hits: 2
+core_keywords: [
+  hotel, hotels, guest house, guesthouse, hostel, resort, homestay, check-in,
+  temple, temples, mosque, church, gurudwara, monastery, shrine, pilgrim, pilgrims, pilgrimage, ghat, ghats,
+  fort, palace, monument, monuments, museum, heritage, ruins, tomb, mausoleum,
+  tourist, tourists, tourism, traveller, travellers, traveler, travelers, visitor, visitors, sightseeing,
+  itinerary, trek, trekking, excursion, holiday, vacation, backpacker, backpackers,
+  beach, beaches, waterfall, hill station, wildlife sanctuary, national park, boat ride, houseboat,
+  entry fee, entrance fee, souvenir, souvenirs, handicrafts, cuisine, thali, street food
+]
+support_keywords: [
+  room, rooms, booking, reservation, travel, trip, tour, tours, guide, guides,
+  station, railway, train, trains, bus, buses, airport, flight, flights, taxi, rickshaw, auto-rickshaw, ferry, boat,
+  ticket, tickets, fare, fares, open, closed, timings, restaurant, restaurants, dish, dishes, food, sweets, tea,
+  lake, river, valley, garden, festival, festivals, fair, bazaar, market, shopping,
+  visa, permit, passport, luggage, safety, scam, scams, touts, architecture, statue, view, views, sunset, sunrise
+]
+negative_keywords: [
+  said, says, told, according to, minister, ministry, police, court, petition, accused, arrested, government,
+  officials, official, party, election, BJP, Congress, crore, lakh, percent, per cent
+]
+
+# Pair filters
+min_words: 3
+max_words: 60
+max_length_ratio: 2.5      # longer side / shorter side, in characters
+min_script_share: 0.6      # share of letters in the expected script (Latin for English, Devanagari for Hindi)
+
+# Size: ILCI pairs are preferred (human-translated); Samanantar fills up to max_pairs
+max_pairs: 20000
+dev_size: 500              # held out for early stopping (plan 5.2) - never the test sets
+seed: 42
+
+# Overlap check against ALL test data (plan 4.3 "strict rule"): exact and near-duplicate
+near_dup_ngram: 8          # remove if the pair shares any word 8-gram with a test sentence

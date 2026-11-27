@@ -209,8 +209,29 @@ def categorise(section: str, sentence: str, mapping: dict[str, str]) -> str:
 
 # ---------- 5. shortlist ----------
 
-def make_shortlist(cands: list[dict], size: int, seed: int) -> list[dict]:
-    """Equal share per category; inside each category, round-robin over destinations."""
+def _round_robin(items: list[dict], k: int, rng: random.Random) -> list[dict]:
+    """Pick up to k items at random, taking one destination at a time so destinations stay balanced."""
+    by_dest: dict[str, list[dict]] = {}
+    for c in items:
+        by_dest.setdefault(c["destination"], []).append(c)
+    for lst in by_dest.values():
+        rng.shuffle(lst)
+    dests = sorted(by_dest)
+    rng.shuffle(dests)
+    picked: list[dict] = []
+    while len(picked) < k and any(by_dest.values()):
+        for d in dests:
+            if by_dest[d] and len(picked) < k:
+                picked.append(by_dest[d].pop())
+    return picked
+
+
+def make_shortlist(cands: list[dict], size: int, seed: int, number_share: float = 0.0) -> list[dict]:
+    """Equal share per category; inside each category, round-robin over destinations.
+
+    number_share: minimum share of sentences containing a number in each category (if enough exist).
+    Numbers (prices, times, distances) are kept on purpose because they are a known weak spot of MT.
+    """
     rng = random.Random(seed)
     by_cat: dict[str, list[dict]] = {}
     for c in cands:
@@ -219,18 +240,11 @@ def make_shortlist(cands: list[dict], size: int, seed: int) -> list[dict]:
     per_cat = size // max(len(by_cat), 1)
     chosen = []
     for cat in sorted(by_cat):
-        by_dest: dict[str, list[dict]] = {}
-        for c in by_cat[cat]:
-            by_dest.setdefault(c["destination"], []).append(c)
-        for lst in by_dest.values():
-            rng.shuffle(lst)
-        dests = sorted(by_dest)
-        rng.shuffle(dests)
-        picked = []
-        while len(picked) < per_cat and any(by_dest.values()):
-            for d in dests:
-                if by_dest[d] and len(picked) < per_cat:
-                    picked.append(by_dest[d].pop())
+        with_num = [c for c in by_cat[cat] if str(c.get("has_number")) == "1"]
+        picked = _round_robin(with_num, round(per_cat * number_share), rng) if number_share else []
+        ids = {c["id"] for c in picked}
+        rest = [c for c in by_cat[cat] if c["id"] not in ids]
+        picked += _round_robin(rest, per_cat - len(picked), rng)
         chosen.extend(picked)
     return sorted(chosen, key=lambda c: c["id"])
 
@@ -290,7 +304,7 @@ def main() -> None:
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     write_tsv(OUT_DIR / "candidates.tsv", cands, CANDIDATE_COLUMNS)
-    shortlist = make_shortlist(cands, cfg["shortlist_size"], cfg["seed"])
+    shortlist = make_shortlist(cands, cfg["shortlist_size"], cfg["seed"], cfg.get("number_share", 0.0))
     shortlist_path = OUT_DIR / "shortlist.tsv"
     if shortlist_has_manual_work(shortlist_path):
         shortlist_path = OUT_DIR / "shortlist_new.tsv"

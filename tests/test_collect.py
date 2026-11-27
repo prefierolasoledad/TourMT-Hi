@@ -55,3 +55,15 @@ def test_shortlist_with_manual_work_is_detected(tmp_path):
     p.write_text("id\tenglish\tkeep\thindi\nt1\tHello there.\ty\tनमस्ते।\n", encoding="utf-8")
     assert shortlist_has_manual_work(p)
     assert not shortlist_has_manual_work(tmp_path / "missing.tsv")
+
+
+def test_shortlist_number_quota():
+    # 10% of food sentences have a number; with number_share=0.5 half the picks must have one
+    cands = [{"id": f"t{i:03d}", "destination": f"d{i % 4}", "category_guess": "food",
+              "has_number": int(i % 10 == 0)} for i in range(200)]
+    short = make_shortlist(cands, size=20, seed=3, number_share=0.5)
+    assert len(short) == 20
+    assert sum(c["has_number"] for c in short) >= 10  # a minimum: the random rest may add more
+    # without the quota, about 10% would have a number
+    plain = make_shortlist(cands, size=20, seed=3)
+    assert sum(c["has_number"] for c in plain) < 10
