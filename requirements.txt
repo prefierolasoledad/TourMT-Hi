@@ -13,6 +13,9 @@ sacrebleu
 beautifulsoup4
 pysbd
 
+# Fine-tuning data: LaBSE alignment check (build_finetune_data.py)
+sentence-transformers
+
 # Later steps:
 # IndicTransToolkit   # needs transformers<5 -> will go in the separate environment
 # (GlotLID language ID runs in the separate environment: requirements-eval.txt)

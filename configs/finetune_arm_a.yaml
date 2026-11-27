@@ -40,7 +40,9 @@ support_keywords: [
 ]
 negative_keywords: [
   said, says, told, according to, minister, ministry, police, court, petition, accused, arrested, government,
-  officials, official, party, election, BJP, Congress, crore, lakh, percent, per cent
+  officials, official, party, election, BJP, Congress, crore, lakh, percent, per cent,
+  inauguration, inaugurated, inaugurates, meeting, scheme, lockdown, covid, coronavirus, students, MPs,
+  Lok Sabha, Rajya Sabha, UNI, PTI, IANS
 ]
 
 # Pair filters
@@ -48,6 +50,15 @@ min_words: 3
 max_words: 60
 max_length_ratio: 2.5      # longer side / shorter side, in characters
 min_script_share: 0.6      # share of letters in the expected script (Latin for English, Devanagari for Hindi)
+
+# Alignment check: LaBSE similarity between the English and Hindi side (0-1); pairs below min_score are
+# dropped. Mined corpora contain mis-aligned pairs that keywords cannot catch. The report shows the score
+# distribution per source, so the threshold can be checked.
+alignment:
+  model: sentence-transformers/LaBSE
+  revision: 836121a0533e5664b21c7aacc5d22951f2b8b25b
+  min_score: 0.80
+  batch_size: 128
 
 # Size: ILCI pairs are preferred (human-translated); Samanantar fills up to max_pairs
 max_pairs: 20000

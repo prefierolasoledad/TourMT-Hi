@@ -8,7 +8,9 @@ Steps:
   4. REMOVE every pair that overlaps any test data (exact match or a shared word n-gram), on either side:
      FLORES-200 dev + devtest (en, hi, mai), all tourism candidates (data/tourism_test/candidates.tsv),
      and any Hindi/Maithili already written for the tourism set (shortlist.tsv, tourism_test.tsv)
-  5. sample up to max_pairs (ILCI first, it is human-translated), split off a dev set, write files + report
+  5. alignment check: drop pairs whose two sides do not mean the same thing (LaBSE similarity; Samanantar is
+     mined from the web and contains mis-aligned pairs)
+  6. sample up to max_pairs (ILCI first, it is human-translated), split off a dev set, write files + report
 
 Usage (Colab or laptop; CPU only; Hugging Face login needed for the gated BPCC and FLORES+):
     python src/build_finetune_data.py --config configs/finetune_arm_a.yaml
@@ -156,12 +158,49 @@ def build_overlap_index(n: int, include_flores: bool = True) -> OverlapIndex:
 def detect_columns(rows: list[list[str]]) -> tuple[int, int]:
     """Find which TSV columns are English (Latin) and Hindi (Devanagari) from sample rows."""
     n_cols = max(len(r) for r in rows)
-    latin = [sum(script_share(r[c], "latin") for r in rows if len(r) > c) for c in range(n_cols)]
-    deva = [sum(script_share(r[c], "devanagari") for r in rows if len(r) > c) for c in range(n_cols)]
+
+    def is_text(c: int) -> bool:  # real sentences have several words; language codes like "eng_Latn" do not
+        vals = [r[c] for r in rows if len(r) > c]
+        return bool(vals) and sum(len(v.split()) for v in vals) / len(vals) >= 2
+
+    latin = [sum(script_share(r[c], "latin") for r in rows if len(r) > c) if is_text(c) else -1 for c in range(n_cols)]
+    deva = [sum(script_share(r[c], "devanagari") for r in rows if len(r) > c) if is_text(c) else -1 for c in range(n_cols)]
     en_col, hi_col = max(range(n_cols), key=lambda c: latin[c]), max(range(n_cols), key=lambda c: deva[c])
     if en_col == hi_col:
         raise ValueError("could not tell the English and Hindi columns apart")
     return en_col, hi_col
+
+
+def tsv_pairs(rows: Iterator[list[str]]) -> Iterator[tuple[str, str]]:
+    """(English, Hindi) pairs from TSV rows (first row = header if it names the columns).
+
+    BPCC files have the header  src_lang  tgt_lang  src  tgt  ; the language columns say which side is
+    English (rows in other language pairs are skipped). Without such a header, the English and Hindi
+    columns are detected from the script of the first 200 rows.
+    """
+    first = next(rows)
+    names = [h.strip().lower() for h in first]
+    if "src" in names and "tgt" in names:
+        i_src, i_tgt = names.index("src"), names.index("tgt")
+        i_sl = names.index("src_lang") if "src_lang" in names else None
+        i_tl = names.index("tgt_lang") if "tgt_lang" in names else None
+        print(f"  header: {first}")
+        for row in rows:
+            if len(row) <= max(i_src, i_tgt):
+                continue
+            sl = row[i_sl].strip() if i_sl is not None else "eng_Latn"
+            tl = row[i_tl].strip() if i_tl is not None else "hin_Deva"
+            if sl.startswith("eng") and tl.startswith("hin"):
+                yield row[i_src].strip(), row[i_tgt].strip()
+            elif sl.startswith("hin") and tl.startswith("eng"):
+                yield row[i_tgt].strip(), row[i_src].strip()
+        return
+    head = [first] + [r for _, r in zip(range(199), rows)]
+    en_col, hi_col = detect_columns(head)
+    print(f"  no header; English = column {en_col}, Hindi = column {hi_col}")
+    for row in _chain(head, rows):
+        if len(row) > max(en_col, hi_col):
+            yield row[en_col].strip(), row[hi_col].strip()
 
 
 def read_ilci(src: dict, max_rows: int | None) -> Iterator[tuple[str, str]]:
@@ -170,17 +209,10 @@ def read_ilci(src: dict, max_rows: int | None) -> Iterator[tuple[str, str]]:
     path = hf_hub_download(src["repo"], src["file"], repo_type="dataset", revision=src["revision"])
     csv.field_size_limit(10**7)
     with open(path, encoding="utf-8", newline="") as f:
-        rows = csv.reader(f, delimiter="\t", quoting=csv.QUOTE_NONE)
-        head = [next(rows) for _ in range(200)]
-        en_col, hi_col = detect_columns(head[1:])  # row 0 may be a header
-        print(f"  ilci: English = column {en_col}, Hindi = column {hi_col}; first row: {head[0][:3]}")
-        # skip row 0 if it looks like a header (e.g. "eng_Latn<TAB>hin_Deva")
-        start = 1 if len(head[0][en_col].split()) <= 2 else 0
-        for i, row in enumerate(_chain(head[start:], rows)):
+        for i, pair in enumerate(tsv_pairs(csv.reader(f, delimiter="\t", quoting=csv.QUOTE_NONE))):
             if max_rows and i >= max_rows:
                 break
-            if len(row) > max(en_col, hi_col):
-                yield row[en_col].strip(), row[hi_col].strip()
+            yield pair
 
 
 def _chain(first: list, rest) -> Iterator:
@@ -209,6 +241,27 @@ def read_samanantar(src: dict, max_rows: int | None) -> Iterator[tuple[str, str]
 READERS = {"ilci": read_ilci, "samanantar": read_samanantar}
 
 
+# ---------- alignment check (LaBSE) ----------
+
+def labse_scores(en: list[str], hi: list[str], model_id: str, revision: str, batch_size: int) -> list[float]:
+    """Cosine similarity of LaBSE sentence embeddings: high = the two sentences mean the same thing.
+    Catches mis-aligned pairs from web mining (English sentence paired with an unrelated Hindi one)."""
+    import torch
+    from sentence_transformers import SentenceTransformer
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"  LaBSE on {device} for {len(en)} pairs" + ("" if device == "cuda" else " (CPU: a few minutes)"))
+    model = SentenceTransformer(model_id, revision=revision, device=device)
+    kw = {"batch_size": batch_size, "normalize_embeddings": True, "convert_to_numpy": True}
+    e, h = model.encode(en, **kw), model.encode(hi, **kw)
+    return [round(float(x), 4) for x in (e * h).sum(axis=1)]
+
+
+def quantiles(xs: list[float]) -> dict:
+    xs = sorted(xs)
+    return {f"p{q}": xs[min(len(xs) - 1, int(q / 100 * len(xs)))] for q in (5, 10, 25, 50, 75, 90)} if xs else {}
+
+
 # ---------- main ----------
 
 def main() -> None:
@@ -216,6 +269,8 @@ def main() -> None:
     parser.add_argument("--config", required=True)
     parser.add_argument("--max_rows", type=int, help="read at most N rows per source (quick test)")
     parser.add_argument("--sources", nargs="+", help="only these sources (default: all in config)")
+    parser.add_argument("--no-labse", dest="no_labse", action="store_true",
+                        help="skip the LaBSE alignment check (ONLY for offline tests)")
     parser.add_argument("--no-flores", dest="no_flores", action="store_true",
                         help="skip the FLORES overlap check (ONLY for offline tests; never for real data)")
     args = parser.parse_args()
@@ -269,6 +324,26 @@ def main() -> None:
         print(f"  {name}: {dict(stats)}")
         print(f"  removed for test overlap: {sum(overlap.values())} {dict(overlap)}")
 
+    # alignment check: drop pairs whose English and Hindi do not mean the same thing
+    al = cfg["alignment"]
+    if kept and not args.no_labse:
+        print(f"Alignment check ({al['model']}, min score {al['min_score']})...")
+        scores = labse_scores([p["en"] for p in kept], [p["hi"] for p in kept], al["model"], al["revision"],
+                              al["batch_size"])
+        for p, sc in zip(kept, scores):
+            p["labse"] = sc
+        for name in report["sources"]:
+            src_scores = [p["labse"] for p in kept if p["source"] == name]
+            low = sum(sc < al["min_score"] for sc in src_scores)
+            report["sources"][name]["labse_quantiles"] = quantiles(src_scores)
+            report["sources"][name]["counts"]["removed_low_alignment"] = low
+            report["sources"][name]["counts"]["kept"] = report["sources"][name]["counts"].get("kept", 0) - low
+            print(f"  {name}: removed {low} of {len(src_scores)} (score quantiles {quantiles(src_scores)})")
+        report["low_alignment_examples"] = [{k: p[k] for k in ("source", "labse", "en", "hi")}
+                                            for p in kept if p["labse"] < al["min_score"]][:15]
+        kept = [p for p in kept if p["labse"] >= al["min_score"]]
+    report["alignment_checked"] = not args.no_labse
+
     # sample: ILCI first (human-translated), then the rest
     rng = random.Random(cfg["seed"])
     total = cfg["max_pairs"] + cfg["dev_size"]
@@ -285,8 +360,8 @@ def main() -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     for split, rows in [("train", train), ("dev", dev)]:
         with open(out_dir / f"{split}.tsv", "w", encoding="utf-8", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=["source", "en", "hi", "keywords"], delimiter="\t",
-                               quoting=csv.QUOTE_NONE, escapechar="\\")
+            w = csv.DictWriter(f, fieldnames=["source", "en", "hi", "keywords", "labse"], delimiter="\t",
+                               quoting=csv.QUOTE_NONE, escapechar="\\", extrasaction="ignore")
             w.writeheader()
             w.writerows(rows)
     report["final"] = {"train": len(train), "dev": len(dev),
