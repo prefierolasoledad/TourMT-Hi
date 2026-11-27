@@ -19,5 +19,4 @@ sentence-transformers
 # Later steps:
 # IndicTransToolkit   # needs transformers<5 -> will go in the separate environment
 # (GlotLID language ID runs in the separate environment: requirements-eval.txt)
-# peft
-# accelerate
+# (peft + accelerate for LoRA are in requirements-eval.txt: IndicTrans2 trains in that environment)

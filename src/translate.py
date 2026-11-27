@@ -67,10 +67,11 @@ class NLLBTranslator:
 
 
 class IndicTrans2Translator:
-    """IndicTrans2: needs IndicTransToolkit for pre/post-processing (adds language tags, script handling)."""
+    """IndicTrans2: needs IndicTransToolkit for pre/post-processing (adds language tags, script handling).
+    With `adapter`, a LoRA adapter from train_lora.py is loaded and merged into the weights."""
 
     def __init__(self, model_name: str, src: str, tgt: str, fp16: bool, device: str,
-                 revision: str | None = None):
+                 revision: str | None = None, adapter: str | None = None):
         from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
         try:
@@ -86,6 +87,14 @@ class IndicTrans2Translator:
         # commit so the code (and weights) cannot change silently between runs.
         self.tok = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True, revision=revision)
         model = AutoModelForSeq2SeqLM.from_pretrained(model_name, trust_remote_code=True, revision=revision)
+        if adapter:
+            from peft import PeftModel
+
+            if not Path(adapter).exists():
+                raise FileNotFoundError(f"adapter {adapter} not found (train it, or download it from the Hub)")
+            # merge: adapter weights are added into the base weights -> same speed as the plain model
+            model = PeftModel.from_pretrained(model, adapter).merge_and_unload()
+            print(f"  loaded LoRA adapter {adapter}")
         if fp16 and device == "cuda":
             model = model.half()
         self.model = model.to(device).eval()
@@ -108,7 +117,7 @@ class IndicTrans2Translator:
 
 def package_versions() -> dict[str, str]:
     versions = {"python": platform.python_version()}
-    for pkg in ["torch", "transformers", "datasets", "sentencepiece", "IndicTransToolkit"]:
+    for pkg in ["torch", "transformers", "datasets", "sentencepiece", "IndicTransToolkit", "peft"]:
         try:
             versions[pkg] = __import__(pkg).__version__
         except Exception:
@@ -143,7 +152,10 @@ def main() -> None:
     print(f"{cfg['run_name']}: {len(sources)} sentences, {cfg['direction']}, model {cfg['model']} on {device}")
 
     translator_cls = {"nllb": NLLBTranslator, "indictrans2": IndicTrans2Translator}[cfg["model_family"]]
-    translator = translator_cls(cfg["model"], src, tgt, cfg["fp16"], device, revision=cfg["revision"])
+    extra = {"adapter": cfg["adapter"]} if cfg["adapter"] else {}
+    if extra and cfg["model_family"] != "indictrans2":
+        raise ValueError("adapters are only supported for IndicTrans2")
+    translator = translator_cls(cfg["model"], src, tgt, cfg["fp16"], device, revision=cfg["revision"], **extra)
 
     dec = cfg["decoding"]
     sorted_src, order = sort_by_length(sources)

@@ -46,7 +46,8 @@ def load_config(path: str | Path) -> dict:
     cfg["decoding"].setdefault("max_length", 256)
     cfg["decoding"].setdefault("batch_size", 16)
     cfg["decoding"].setdefault("use_cache", True)  # IndicTrans2 needs False with transformers>=4.4x
-    cfg.setdefault("revision", None)  # exact model commit on Hugging Face (None = latest)
+    cfg.setdefault("revision", None)
+    cfg.setdefault("adapter", None)  # LoRA adapter folder (from train_lora.py); IndicTrans2 only  # exact model commit on Hugging Face (None = latest)
     cfg.setdefault("fp16", True)
     cfg.setdefault("seed", 42)
     cfg.setdefault("limit", None)

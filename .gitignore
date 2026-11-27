@@ -21,6 +21,7 @@ data/finetune/*
 
 # quick smoke-test outputs
 outputs/*_limit*/
+results/train_*_smoke.json
 
 # editor
 .vscode/

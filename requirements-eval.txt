@@ -29,6 +29,10 @@ sacremoses
 regex
 tqdm
 
+# LoRA fine-tuning (train_lora.py) and loading adapters (translate.py)
+peft
+accelerate
+
 # Language ID (GlotLID) for the Maithili off-target check. 'fasttext-wheel' has ready-made
 # Python 3.11 packages; the official 'fasttext' 0.9.3 has none and would need compiling.
 fasttext-wheel
