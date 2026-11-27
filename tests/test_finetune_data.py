@@ -5,6 +5,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from build_finetune_data import (  # noqa: E402
+    fix_quotes,
+    min_score_by_source,
     KeywordMatcher, OverlapIndex, clean_reason, detect_columns, is_tourism, norm, quantiles, script_share,
     tsv_pairs,
 )
@@ -85,3 +87,17 @@ def test_quantiles():
     q = quantiles([0.1 * i for i in range(11)])
     assert q["p50"] == 0.5 and q["p10"] == 0.1
     assert quantiles([]) == {}
+
+
+def test_fix_quotes():
+    assert fix_quotes('"It is called ""the pink city"" by locals."') == 'It is called "the pink city" by locals.'
+    assert fix_quotes("No quotes here.") == "No quotes here."
+    assert fix_quotes('He said "go".') == 'He said "go".'
+
+
+def test_min_score_by_source():
+    assert min_score_by_source(0.8, ["ilci", "samanantar"]) == {"ilci": 0.8, "samanantar": 0.8}
+    assert min_score_by_source({"ilci": 0.7, "default": 0.8}, ["ilci", "samanantar"]) == {"ilci": 0.7, "samanantar": 0.8}
+    import pytest
+    with pytest.raises(ValueError):
+        min_score_by_source({"ilci": 0.7}, ["ilci", "samanantar"])

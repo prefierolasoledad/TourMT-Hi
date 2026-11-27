@@ -41,7 +41,7 @@ support_keywords: [
 negative_keywords: [
   said, says, told, according to, minister, ministry, police, court, petition, accused, arrested, government,
   officials, official, party, election, BJP, Congress, crore, lakh, percent, per cent,
-  inauguration, inaugurated, inaugurates, meeting, scheme, lockdown, covid, coronavirus, students, MPs,
+  chief minister, inauguration, inaugurated, inaugurates, meeting, scheme, lockdown, covid, coronavirus, students, MPs,
   Lok Sabha, Rajya Sabha, UNI, PTI, IANS
 ]
 
@@ -57,7 +57,12 @@ min_script_share: 0.6      # share of letters in the expected script (Latin for 
 alignment:
   model: sentence-transformers/LaBSE
   revision: 836121a0533e5664b21c7aacc5d22951f2b8b25b
-  min_score: 0.80
+  # one number for all sources, or one per source. ILCI is human-translated: its pairs at 0.70-0.80 looked
+  # like correct, freer translations (run of 2026-11-27), so it gets a lower bar. Samanantar (web-mined,
+  # median 0.81) keeps 0.80: below that, partial translations and unrelated sentences are common.
+  min_score:
+    ilci: 0.70
+    samanantar: 0.80
   batch_size: 128
 
 # Size: ILCI pairs are preferred (human-translated); Samanantar fills up to max_pairs

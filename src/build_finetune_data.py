@@ -82,6 +82,14 @@ class KeywordMatcher:
         return {m.lower() for m in self.re.findall(text)}
 
 
+def fix_quotes(text: str) -> str:
+    """Undo CSV quoting left in some Samanantar lines: '"He said ""hi""."' -> 'He said "hi".'"""
+    text = text.strip()
+    if len(text) >= 2 and text[0] == text[-1] == '"':
+        text = text[1:-1].strip()
+    return text.replace('""', '"')
+
+
 def clean_reason(en: str, hi: str, cfg: dict) -> str | None:
     """None if the pair passes the cleaning filters, otherwise the reason."""
     n_en, n_hi = len(en.split()), len(hi.split())
@@ -259,6 +267,16 @@ def labse_scores(en: list[str], hi: list[str], model_id: str, revision: str, bat
     return [round(float(x), 4) for x in (e * h).sum(axis=1)]
 
 
+def min_score_by_source(setting, sources: list[str]) -> dict[str, float]:
+    """alignment.min_score is one number for all sources, or {source: number} (with optional 'default')."""
+    if isinstance(setting, dict):
+        missing = [s for s in sources if s not in setting and "default" not in setting]
+        if missing:
+            raise ValueError(f"alignment.min_score has no value for {missing} (add them or a 'default')")
+        return {s: float(setting.get(s, setting.get("default"))) for s in sources}
+    return {s: float(setting) for s in sources}
+
+
 def quantiles(xs: list[float]) -> dict:
     xs = sorted(xs)
     return {f"p{q}": xs[min(len(xs) - 1, int(q / 100 * len(xs)))] for q in (5, 10, 25, 50, 75, 90)} if xs else {}
@@ -301,6 +319,8 @@ def main() -> None:
     seen: set[str] = set()
     if args.from_cache:
         kept, report["sources"] = saved["kept"], saved["sources"]
+        for p in kept:
+            p["en"], p["hi"] = fix_quotes(p["en"]), fix_quotes(p["hi"])
     for name, src in cfg["sources"].items():
         if args.from_cache:
             break
@@ -313,6 +333,7 @@ def main() -> None:
         print(f"Reading {name} (max_rows={max_rows})...")
         for en, hi in READERS[name](src, max_rows):
             stats["read"] += 1
+            en, hi = fix_quotes(en), fix_quotes(hi)
             reason = clean_reason(en, hi, cfg)
             if reason:
                 stats[f"removed_{reason}"] += 1
@@ -351,21 +372,41 @@ def main() -> None:
     # alignment check: drop pairs whose English and Hindi do not mean the same thing
     al = cfg["alignment"]
     if kept and not args.no_labse:
-        print(f"Alignment check ({al['model']}, min score {al['min_score']})...")
-        scores = labse_scores([p["en"] for p in kept], [p["hi"] for p in kept], al["model"], al["revision"],
-                              al["batch_size"])
-        for p, sc in zip(kept, scores):
-            p["labse"] = sc
+        min_score = min_score_by_source(al["min_score"], list(report["sources"]))
+        print(f"Alignment check ({al['model']}, min score {min_score})...")
+        score_cache = out_dir / "labse_scores.json"  # scores per (en, hi): changing the threshold needs no re-run
+        cached = {}
+        if args.from_cache and score_cache.exists():
+            saved_scores = json.loads(score_cache.read_text(encoding="utf-8"))
+            if saved_scores.get("model") == al["model"] and saved_scores.get("revision") == al["revision"]:
+                cached = {(e, h): sc for e, h, sc in saved_scores["scores"]}
+        todo = [p for p in kept if (p["en"], p["hi"]) not in cached]
+        print(f"  {len(kept) - len(todo)} scores from cache, {len(todo)} to compute")
+        if todo:
+            new = labse_scores([p["en"] for p in todo], [p["hi"] for p in todo], al["model"], al["revision"],
+                               al["batch_size"])
+            cached.update({(p["en"], p["hi"]): sc for p, sc in zip(todo, new)})
+            score_cache.write_text(json.dumps({"model": al["model"], "revision": al["revision"],
+                                               "scores": [[e, h, sc] for (e, h), sc in cached.items()]},
+                                              ensure_ascii=False), encoding="utf-8")
+        for p in kept:
+            p["labse"] = cached[(p["en"], p["hi"])]
         for name in report["sources"]:
             src_scores = [p["labse"] for p in kept if p["source"] == name]
-            low = sum(sc < al["min_score"] for sc in src_scores)
+            low = sum(sc < min_score[name] for sc in src_scores)
             report["sources"][name]["labse_quantiles"] = quantiles(src_scores)
+            report["sources"][name]["labse_min_score"] = min_score[name]
             report["sources"][name]["counts"]["removed_low_alignment"] = low
-            report["sources"][name]["counts"]["kept"] = report["sources"][name]["counts"].get("kept", 0) - low
-            print(f"  {name}: removed {low} of {len(src_scores)} (score quantiles {quantiles(src_scores)})")
-        report["low_alignment_examples"] = [{k: p[k] for k in ("source", "labse", "en", "hi")}
-                                            for p in kept if p["labse"] < al["min_score"]][:15]
-        kept = [p for p in kept if p["labse"] >= al["min_score"]]
+            report["sources"][name]["counts"]["kept"] = sum(p["source"] == name for p in kept) - low
+            print(f"  {name}: removed {low} of {len(src_scores)} below {min_score[name]} "
+                  f"(score quantiles {quantiles(src_scores)})")
+        low_pairs = [p for p in kept if p["labse"] < min_score[p["source"]]]
+        # examples from each source, closest to the threshold first (the borderline cases are the informative ones)
+        report["low_alignment_examples"] = [
+            {k: p[k] for k in ("source", "labse", "en", "hi")}
+            for name in report["sources"]
+            for p in sorted((q for q in low_pairs if q["source"] == name), key=lambda q: -q["labse"])[:8]]
+        kept = [p for p in kept if p["labse"] >= min_score[p["source"]]]
     report["alignment_checked"] = not args.no_labse
 
     # sample: ILCI first (human-translated), then the rest
