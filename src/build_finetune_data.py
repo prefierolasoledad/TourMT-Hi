@@ -250,9 +250,11 @@ def labse_scores(en: list[str], hi: list[str], model_id: str, revision: str, bat
     from sentence_transformers import SentenceTransformer
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(f"  LaBSE on {device} for {len(en)} pairs" + ("" if device == "cuda" else " (CPU: a few minutes)"))
+    print(f"  LaBSE on {device} for {len(en)} pairs" + ("" if device == "cuda" else
+          " - WARNING: no GPU, this can take 30-60 minutes. Use a T4 GPU runtime for ~2 minutes."))
     model = SentenceTransformer(model_id, revision=revision, device=device)
-    kw = {"batch_size": batch_size, "normalize_embeddings": True, "convert_to_numpy": True}
+    kw = {"batch_size": batch_size, "normalize_embeddings": True, "convert_to_numpy": True,
+          "show_progress_bar": True}
     e, h = model.encode(en, **kw), model.encode(hi, **kw)
     return [round(float(x), 4) for x in (e * h).sum(axis=1)]
 
@@ -269,6 +271,8 @@ def main() -> None:
     parser.add_argument("--config", required=True)
     parser.add_argument("--max_rows", type=int, help="read at most N rows per source (quick test)")
     parser.add_argument("--sources", nargs="+", help="only these sources (default: all in config)")
+    parser.add_argument("--from_cache", action="store_true",
+                        help="reuse the filtered pairs saved by the previous run (only re-run alignment + sampling)")
     parser.add_argument("--no-labse", dest="no_labse", action="store_true",
                         help="skip the LaBSE alignment check (ONLY for offline tests)")
     parser.add_argument("--no-flores", dest="no_flores", action="store_true",
@@ -276,16 +280,30 @@ def main() -> None:
     args = parser.parse_args()
     cfg = yaml.safe_load(open(args.config, encoding="utf-8"))
 
-    print("Building test-overlap index...")
-    index = build_overlap_index(cfg["near_dup_ngram"], include_flores=not args.no_flores)
-    print(f"  {sum(index.sizes.values())} test sentences: {dict(index.sizes)}")
+    cache = ROOT / "data" / "finetune" / cfg["name"] / "filtered_before_alignment.json"
+    if args.from_cache:
+        if not cache.exists():
+            sys.exit(f"No cache at {cache}: run once without --from_cache first.")
+        print(f"Using filtered pairs from {cache} (reading, cleaning, keyword and overlap steps skipped)")
+        saved = json.loads(cache.read_text(encoding="utf-8"))
+        index = None
+    else:
+        print("Building test-overlap index...")
+        index = build_overlap_index(cfg["near_dup_ngram"], include_flores=not args.no_flores)
+        print(f"  {sum(index.sizes.values())} test sentences: {dict(index.sizes)}")
 
     core_m, support_m = KeywordMatcher(cfg["core_keywords"]), KeywordMatcher(cfg["support_keywords"])
     negative_m = KeywordMatcher(cfg["negative_keywords"])
-    report: dict = {"name": cfg["name"], "config": cfg, "test_sentences_indexed": dict(index.sizes), "sources": {}}
+    report: dict = {"name": cfg["name"], "config": cfg,
+                    "test_sentences_indexed": dict(index.sizes) if index else "see earlier run (from cache)",
+                    "sources": {}}
     kept: list[dict] = []
     seen: set[str] = set()
+    if args.from_cache:
+        kept, report["sources"] = saved["kept"], saved["sources"]
     for name, src in cfg["sources"].items():
+        if args.from_cache:
+            break
         if args.sources and name not in args.sources:
             continue
         max_rows = args.max_rows or src.get("max_rows")
@@ -324,6 +342,12 @@ def main() -> None:
         print(f"  {name}: {dict(stats)}")
         print(f"  removed for test overlap: {sum(overlap.values())} {dict(overlap)}")
 
+    # save the filtered pairs, so changing only the alignment step does not mean re-reading 10M pairs
+    out_dir = ROOT / "data" / "finetune" / cfg["name"]
+    out_dir.mkdir(parents=True, exist_ok=True)
+    cache = out_dir / "filtered_before_alignment.json"
+    cache.write_text(json.dumps({"kept": kept, "sources": report["sources"]}, ensure_ascii=False), encoding="utf-8")
+
     # alignment check: drop pairs whose English and Hindi do not mean the same thing
     al = cfg["alignment"]
     if kept and not args.no_labse:
@@ -356,8 +380,6 @@ def main() -> None:
     n_dev = min(cfg["dev_size"], len(chosen) // 10)  # never more than 10% of the data
     dev, train = chosen[:n_dev], chosen[n_dev:]
 
-    out_dir = ROOT / "data" / "finetune" / cfg["name"]
-    out_dir.mkdir(parents=True, exist_ok=True)
     for split, rows in [("train", train), ("dev", dev)]:
         with open(out_dir / f"{split}.tsv", "w", encoding="utf-8", newline="") as f:
             w = csv.DictWriter(f, fieldnames=["source", "en", "hi", "keywords", "labse"], delimiter="\t",
