@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
 from common import load_config  # noqa: E402
-from train_lora import load_train_config, read_pairs  # noqa: E402
+from train_lora import load_train_config, pad_labels, read_pairs  # noqa: E402
 
 
 def test_lora_configs_load_with_defaults():
@@ -53,3 +53,9 @@ def test_read_pairs_empty_file_fails(tmp_path):
     path.write_text("source\ten\thi\n", encoding="utf-8")
     with pytest.raises(ValueError):
         read_pairs(path, "en", "hi")
+
+
+def test_pad_labels_right_with_ignore_index():
+    out = pad_labels([[5, 6, 2], [7, 2]], multiple=8)
+    assert out == [[5, 6, 2] + [-100] * 5, [7, 2] + [-100] * 6]
+    assert len(pad_labels([[1] * 9], multiple=8)[0]) == 16

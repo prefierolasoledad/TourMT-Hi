@@ -79,6 +79,37 @@ def read_pairs(path: str | Path, src: str, tgt: str) -> tuple[list[str], list[st
     return sources, targets
 
 
+def pad_labels(labels: list[list[int]], multiple: int = 8, pad_id: int = -100) -> list[list[int]]:
+    """Pad target token lists on the RIGHT to one length (a multiple of `multiple`, good for fp16).
+    -100 means "ignore in the loss", so padding never counts as a mistake."""
+    longest = max(len(x) for x in labels)
+    length = -(-longest // multiple) * multiple
+    return [list(x) + [pad_id] * (length - len(x)) for x in labels]
+
+
+class IndicTrans2Collator:
+    """Makes one batch: sources padded on the LEFT (as IndicTrans2 expects), targets padded on the right.
+    Same behaviour as IndicTransToolkit's IndicDataCollator, which is broken in version 1.1.1
+    (NameError: pad_without_fast_tokenizer_warning). The model builds decoder inputs from the labels itself."""
+
+    def __init__(self, tokenizer, multiple: int = 8):
+        self.tok, self.multiple = tokenizer, multiple
+
+    def __call__(self, features: list[dict]) -> dict:
+        import torch
+
+        inputs = [{k: v for k, v in f.items() if k != "labels"} for f in features]
+        side = self.tok.padding_side
+        self.tok.padding_side = "left"
+        try:
+            batch = self.tok.pad(inputs, padding="longest", pad_to_multiple_of=self.multiple, return_tensors="pt")
+        finally:
+            self.tok.padding_side = side
+        if "labels" in features[0]:
+            batch["labels"] = torch.tensor(pad_labels([f["labels"] for f in features], self.multiple))
+        return dict(batch)
+
+
 def check_data_is_clean(data_dir: Path) -> None:
     """Refuse to train on data built without the FLORES test-overlap check (plan 4.3 strict rule)."""
     name = data_dir.name
@@ -144,7 +175,7 @@ def main() -> None:
     from peft import LoraConfig, get_peft_model
     from transformers import (AutoModelForSeq2SeqLM, AutoTokenizer, EarlyStoppingCallback, Seq2SeqTrainer,
                               Seq2SeqTrainingArguments)
-    from IndicTransToolkit import IndicDataCollator, IndicProcessor
+    from IndicTransToolkit import IndicProcessor
 
     from common import check_indicnlp_normalizer
     check_indicnlp_normalizer()
@@ -222,8 +253,7 @@ def main() -> None:
     trainer = Seq2SeqTrainer(
         model=model, args=targs, train_dataset=train_ds, eval_dataset=dev_ds,
         # pads sources on the LEFT, as IndicTrans2 expects; label padding is ignored in the loss
-        data_collator=IndicDataCollator(tokenizer=tok, model=model, padding="longest", pad_to_multiple_of=8,
-                                        label_pad_token_id=-100),
+        data_collator=IndicTrans2Collator(tok),
         callbacks=[EarlyStoppingCallback(early_stopping_patience=tr["patience"])],
     )
     print(f"  ~{steps_per_epoch} steps per epoch, at most {tr['max_epochs']} epochs; "
