@@ -30,7 +30,7 @@ regex
 tqdm
 
 # LoRA fine-tuning (train_lora.py) and loading adapters (translate.py)
-peft
+peft<1.0        # PEFT 1.0 will drop support for transformers<5.6 (we need 4.57 for IndicTrans2)
 accelerate
 
 # Language ID (GlotLID) for the Maithili off-target check. 'fasttext-wheel' has ready-made
