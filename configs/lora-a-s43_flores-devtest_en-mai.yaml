@@ -1,0 +1,19 @@
+# IndicTrans2-200M + LoRA adapter (arm A, seed 43) on FLORES devtest en-mai.
+# en-mai: RQ4 transfer - the adapter was trained on English->Hindi only.
+# Run (venv-eval): python src/translate.py --config configs/lora-a-s43_flores-devtest_en-mai.yaml
+run_name: lora-a-s43_flores-devtest_en-mai
+model: ai4bharat/indictrans2-en-indic-dist-200M
+model_family: indictrans2
+revision: 2cfd0a20057756d756bf3e53528f492afc52f91a
+adapter: checkpoints/lora_it2-200m_arm-a_en-hi_s43/adapter
+test_set: flores
+split: devtest
+direction: en-mai
+decoding:
+  num_beams: 4
+  max_length: 256
+  batch_size: 16
+  use_cache: false
+fp16: true
+seed: 42
+output_root: outputs

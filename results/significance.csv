@@ -1,0 +1,10 @@
+baseline,system,metric,n_sentences,baseline_score,system_score,delta,ci_low,ci_high,p_value,significant,n_samples,seed,computed_at
+it2-200m_flores-devtest_en-hi,lora-a-s42_flores-devtest_en-hi,BLEU,1012,36.75,35.81,-0.94,-1.45,-0.42,0.0,True,1000,12345,2026-11-28 09:29:08
+it2-200m_flores-devtest_en-hi,lora-a-s42_flores-devtest_en-hi,COMET,1012,0.8137,0.8086,-0.0051,-0.0071,-0.003,0.0,True,1000,12345,2026-11-28 09:29:08
+it2-200m_flores-devtest_en-hi,lora-a-s42_flores-devtest_en-hi,CometKiwi,1012,0.85,0.8448,-0.0052,-0.0068,-0.0037,0.0,True,1000,12345,2026-11-28 09:29:08
+it2-200m_flores-devtest_en-hi,lora-a-s42_flores-devtest_en-hi,chrF++,1012,58.89,58.24,-0.65,-1.0,-0.3,0.0,True,1000,12345,2026-11-28 09:29:08
+it2-200m_flores-devtest_en-mai,lora-a-s42_flores-devtest_en-mai,BLEU,1012,18.08,16.52,-1.55,-2.03,-1.02,0.0,True,1000,12345,2026-11-28 09:29:11
+it2-200m_flores-devtest_en-mai,lora-a-s42_flores-devtest_en-mai,COMET,1012,0.6704,0.6624,-0.008,-0.0111,-0.005,0.0,True,1000,12345,2026-11-28 09:29:11
+it2-200m_flores-devtest_en-mai,lora-a-s42_flores-devtest_en-mai,CometKiwi,1012,0.6954,0.7069,0.0116,0.0084,0.0149,0.0,True,1000,12345,2026-11-28 09:29:11
+it2-200m_flores-devtest_en-mai,lora-a-s42_flores-devtest_en-mai,chrF++,1012,50.31,47.91,-2.41,-2.84,-1.99,0.0,True,1000,12345,2026-11-28 09:29:11
+it2-200m_flores-devtest_en-mai,lora-a-s42_flores-devtest_en-mai,hindi_rate,1012,0.0089,0.0445,0.0356,0.0237,0.0484,0.0,True,1000,12345,2026-11-28 09:29:11
