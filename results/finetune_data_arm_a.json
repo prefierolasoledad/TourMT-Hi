@@ -1,0 +1,493 @@
+{
+  "name": "arm_a",
+  "config": {
+    "name": "arm_a",
+    "sources": {
+      "ilci": {
+        "repo": "ai4bharat/BPCC",
+        "file": "ilci/hin_Deva.tsv",
+        "revision": "5bde309374f21c39e7c3d505f28ae11f58f2a220"
+      },
+      "samanantar": {
+        "repo": "ai4bharat/samanantar",
+        "config": "hi",
+        "revision": "ead34c5b22a0354d350e7dfdd6aece7df5a48f37",
+        "max_rows": null
+      }
+    },
+    "min_keyword_hits": 2,
+    "core_keywords": [
+      "hotel",
+      "hotels",
+      "guest house",
+      "guesthouse",
+      "hostel",
+      "resort",
+      "homestay",
+      "check-in",
+      "temple",
+      "temples",
+      "mosque",
+      "church",
+      "gurudwara",
+      "monastery",
+      "shrine",
+      "pilgrim",
+      "pilgrims",
+      "pilgrimage",
+      "ghat",
+      "ghats",
+      "fort",
+      "palace",
+      "monument",
+      "monuments",
+      "museum",
+      "heritage",
+      "ruins",
+      "tomb",
+      "mausoleum",
+      "tourist",
+      "tourists",
+      "tourism",
+      "traveller",
+      "travellers",
+      "traveler",
+      "travelers",
+      "visitor",
+      "visitors",
+      "sightseeing",
+      "itinerary",
+      "trek",
+      "trekking",
+      "excursion",
+      "holiday",
+      "vacation",
+      "backpacker",
+      "backpackers",
+      "beach",
+      "beaches",
+      "waterfall",
+      "hill station",
+      "wildlife sanctuary",
+      "national park",
+      "boat ride",
+      "houseboat",
+      "entry fee",
+      "entrance fee",
+      "souvenir",
+      "souvenirs",
+      "handicrafts",
+      "cuisine",
+      "thali",
+      "street food"
+    ],
+    "support_keywords": [
+      "room",
+      "rooms",
+      "booking",
+      "reservation",
+      "travel",
+      "trip",
+      "tour",
+      "tours",
+      "guide",
+      "guides",
+      "station",
+      "railway",
+      "train",
+      "trains",
+      "bus",
+      "buses",
+      "airport",
+      "flight",
+      "flights",
+      "taxi",
+      "rickshaw",
+      "auto-rickshaw",
+      "ferry",
+      "boat",
+      "ticket",
+      "tickets",
+      "fare",
+      "fares",
+      "open",
+      "closed",
+      "timings",
+      "restaurant",
+      "restaurants",
+      "dish",
+      "dishes",
+      "food",
+      "sweets",
+      "tea",
+      "lake",
+      "river",
+      "valley",
+      "garden",
+      "festival",
+      "festivals",
+      "fair",
+      "bazaar",
+      "market",
+      "shopping",
+      "visa",
+      "permit",
+      "passport",
+      "luggage",
+      "safety",
+      "scam",
+      "scams",
+      "touts",
+      "architecture",
+      "statue",
+      "view",
+      "views",
+      "sunset",
+      "sunrise"
+    ],
+    "negative_keywords": [
+      "said",
+      "says",
+      "told",
+      "according to",
+      "minister",
+      "ministry",
+      "police",
+      "court",
+      "petition",
+      "accused",
+      "arrested",
+      "government",
+      "officials",
+      "official",
+      "party",
+      "election",
+      "BJP",
+      "Congress",
+      "crore",
+      "lakh",
+      "percent",
+      "per cent",
+      "chief minister",
+      "inauguration",
+      "inaugurated",
+      "inaugurates",
+      "meeting",
+      "scheme",
+      "lockdown",
+      "covid",
+      "coronavirus",
+      "students",
+      "MPs",
+      "Lok Sabha",
+      "Rajya Sabha",
+      "UNI",
+      "PTI",
+      "IANS"
+    ],
+    "min_words": 3,
+    "max_words": 60,
+    "max_length_ratio": 2.5,
+    "min_script_share": 0.6,
+    "alignment": {
+      "model": "sentence-transformers/LaBSE",
+      "revision": "836121a0533e5664b21c7aacc5d22951f2b8b25b",
+      "min_score": {
+        "ilci": 0.7,
+        "samanantar": 0.8
+      },
+      "batch_size": 128
+    },
+    "max_pairs": 20000,
+    "dev_size": 500,
+    "seed": 42,
+    "near_dup_ngram": 8
+  },
+  "test_sentences_indexed": {
+    "flores_dev_en": 997,
+    "flores_dev_hi": 997,
+    "flores_dev_mai": 997,
+    "flores_devtest_en": 1012,
+    "flores_devtest_hi": 1012,
+    "flores_devtest_mai": 1012,
+    "tourism_candidates_english": 5675,
+    "tourism_shortlist_english": 448
+  },
+  "sources": {
+    "ilci": {
+      "counts": {
+        "read": 165649,
+        "not_tourism": 156256,
+        "removed_too_long": 1181,
+        "removed_too_short": 1151,
+        "kept": 4200,
+        "removed_length_ratio": 1399,
+        "removed_wrong_script": 205,
+        "not_tourism_news": 513,
+        "removed_overlap_near_dup": 3,
+        "removed_duplicate": 222,
+        "removed_low_alignment": 519
+      },
+      "overlap_removed_by_test_set": {
+        "flores_dev_hi": 1,
+        "tourism_candidates_english": 2
+      },
+      "top_keywords": {
+        "temple": 898,
+        "tourists": 586,
+        "fort": 412,
+        "temples": 394,
+        "palace": 388,
+        "tourist": 322,
+        "tourism": 290,
+        "national park": 286,
+        "hotel": 282,
+        "station": 256,
+        "lake": 251,
+        "beach": 236,
+        "river": 232,
+        "museum": 231,
+        "heritage": 227,
+        "hotels": 219,
+        "architecture": 218,
+        "tour": 211,
+        "holiday": 189,
+        "view": 183,
+        "hill station": 182,
+        "tours": 170,
+        "visitors": 167,
+        "valley": 164,
+        "beaches": 151
+      },
+      "labse_quantiles": {
+        "p5": 0.3527,
+        "p10": 0.6403,
+        "p25": 0.8109,
+        "p50": 0.8565,
+        "p75": 0.8882,
+        "p90": 0.9106
+      },
+      "labse_min_score": 0.7
+    },
+    "samanantar": {
+      "counts": {
+        "read": 10125706,
+        "not_tourism": 9596638,
+        "removed_too_short": 183417,
+        "not_tourism_news": 38900,
+        "removed_too_long": 161924,
+        "removed_wrong_script": 32457,
+        "removed_length_ratio": 92305,
+        "kept": 10054,
+        "removed_duplicate": 3315,
+        "removed_overlap_near_dup": 14,
+        "removed_low_alignment": 6682
+      },
+      "overlap_removed_by_test_set": {
+        "flores_devtest_en": 1,
+        "tourism_candidates_english": 8,
+        "flores_dev_hi": 5
+      },
+      "top_keywords": {
+        "temple": 3299,
+        "tourism": 1768,
+        "tourists": 1578,
+        "tourist": 1493,
+        "heritage": 1165,
+        "hotel": 1161,
+        "temples": 1091,
+        "river": 910,
+        "pilgrims": 908,
+        "visitors": 901,
+        "fort": 886,
+        "museum": 832,
+        "hotels": 800,
+        "shrine": 769,
+        "palace": 761,
+        "travel": 720,
+        "festival": 681,
+        "food": 636,
+        "open": 587,
+        "railway": 540,
+        "architecture": 530,
+        "lake": 512,
+        "view": 509,
+        "travellers": 498,
+        "station": 463
+      },
+      "labse_quantiles": {
+        "p5": 0.6371,
+        "p10": 0.6896,
+        "p25": 0.7602,
+        "p50": 0.8146,
+        "p75": 0.8587,
+        "p90": 0.8923
+      },
+      "labse_min_score": 0.8
+    }
+  },
+  "low_alignment_examples": [
+    {
+      "source": "ilci",
+      "labse": 0.6992,
+      "en": "On coming to the area of tourism Heritage Tourism has got encouragement from this fort .",
+      "hi": "पर्यटन के क्षेत्र में आ जाने से इस फोर्ट से धरोहर पर्यटन ( Heritage Tourism ) को बढ़ावा मिला है ।"
+    },
+    {
+      "source": "ilci",
+      "labse": 0.6976,
+      "en": "If one is on a long holiday tour, travel at a more leisurely pace amidst the virgin dunes and fore go the jeep element.",
+      "hi": "अगर कोई लम्बी यात्रा पर हो , प्राकृतिक रेत के टीलों के मध्य की यात्रा में इत्मीनान से चलें और पहले जीप से जाएँ."
+    },
+    {
+      "source": "ilci",
+      "labse": 0.6973,
+      "en": "The hill station is placed at the foothills of the mighty Dhaulandhar range.",
+      "hi": "पर्वतीय स्थान महान धौलाधार श्रेणी की निचली पहाडियों पर स्थित है।"
+    },
+    {
+      "source": "ilci",
+      "labse": 0.697,
+      "en": "Thus the whole of this mountain valley is like a heaven for the fans of trekking .",
+      "hi": "`` इस तरह यह समूची पार्वती घाटी ट्रैकिंग के शौकीनों के लिए स्वर्ग के समान है ।"
+    },
+    {
+      "source": "ilci",
+      "labse": 0.6967,
+      "en": "Start shopping for curios and souvenirs at Purabshree, Jail Road and then head straight to Bara Bazaar.",
+      "hi": "पूरब श्री जेल रोड़ से असाधारण (अद्भुत) और यादगार स्मृति चिन्हों को खरीद कर अपनी खरीददारी आरम्भ करें और फिर सीधे बारा बाजार जायें।"
+    },
+    {
+      "source": "ilci",
+      "labse": 0.6955,
+      "en": "The Garhwal Mandal Vikas Nigam has a full fledged mountaineering and trekking division, based at MunikiReti, Rishikesh.For information about Peak booking fees, Inner Line restrictions, import of equipment,camera permits, insurance, medical attention, and",
+      "hi": "गढ़वाल मंडल विकास निगम में एक पूर्ण सुविधा युक्त पर्वतारोहण एवं आरोहण विभाग है, जो मुनि की रेती ॠषिकेश पर आधारित पीक बकिंग फीस, इनर लाईन प्रतिबन्धों, उपकरण के आयात, केमरा परमिटों, इन्श्योंरेंस चिकित्सा ध्यान एवं खाली कराने की प्रक्रिया की सूचना के लिए दिल"
+    },
+    {
+      "source": "ilci",
+      "labse": 0.694,
+      "en": "Animal life of the order of Deer, Giant, and Malabar Squirrel abound in plenty in this scenic Hill Station in India.A tour to Idukki would reveal the selfsame.",
+      "hi": "भारत में इस दर्शनीय पर्वत स्थल में पशु जीवन के उदाहरण के रूप में हिरन भीमकाय पशु, मालाबार गिलहरियों जैसे बहुतायात में हैं, इदुक्की का एक भ्रमण स्वयं ही प्रदर्शित करता है।"
+    },
+    {
+      "source": "ilci",
+      "labse": 0.6939,
+      "en": "Barely an hour away from Singapore by ferry, tourist accommodation has begun to appear to take advantage of Tanjung Pinang’s gateway from it all appeal",
+      "hi": "सिंगपुर से एक घंटे की दूरी पर बारले पर्यटकों के आवास के लिए उपलब्ध है जिसका लाभ तनंजुंग पियांग गेटवे पर उन समस्त आग्रह कर्ताओं को उपलब्ध है।"
+    },
+    {
+      "source": "samanantar",
+      "labse": 0.7999,
+      "en": "The 1008 Lingam Temple is located in Ariyanoor, and it is one of the most famous temples of the city",
+      "hi": "1008 लिंगम मंदिर अरियानून में स्थित है, और यह शहर के सबसे प्रसिद्ध मंदिरों में से एक है।"
+    },
+    {
+      "source": "samanantar",
+      "labse": 0.7999,
+      "en": "The Arogya fair to be organized simultaneously at Palace Grounds, Bengaluru will provide a good exposure for manufacturers/importers of Traditional Medicines/Raw Materials of the BRICS Countries to have first hand experience of Indian Traditional Medicinal products/manufacturing facilities.",
+      "hi": "यह मेला ब्रिक्स देशों के विनिर्माताओं/परम्परागत चिकित्सा/ कच्चे माल के आयातकों को भारतीय परम्परागत चिकित्सा उत्पादों/विनिर्माण सुविधाओं के बारे में सीधे अनुभव प्राप्त करने के लिए अवसर प्रदान करेगा।"
+    },
+    {
+      "source": "samanantar",
+      "labse": 0.7999,
+      "en": "They had exchanged Navroz greetings noting that the festival symbolises the shared heritage and cultural linkages between the two countries.",
+      "hi": "दोनों नेताओं ने एक दूसरे को नवरोज की बधाई दी और कहा कि यह त्योहार दोनों देशों के बीच साझा विरासत और सांस्कृतिक संबंधों का प्रतीक है।"
+    },
+    {
+      "source": "samanantar",
+      "labse": 0.7999,
+      "en": "CONCOR has set up Perishable Cargo Centre (PCC) at Ghazipur Ghat Railway station in Ghazipur, Uttar Pradesh for transportation and storage of fruits and vegetables under CONCOR CSR initiatives",
+      "hi": "कॉरपोरेट सामाजिक उत्तरदायित्व कॉनकोर के तहत उत्तरप्रदेश में गाजीपुर के गाजीपुर घाट रेलवे स्टेशन पर शीघ्र विनाशशील कार्गो केन्द्र (पीसीसी) को स्थापित किया जिसमें फल और सब्जियों का भंडारण किया जाता है"
+    },
+    {
+      "source": "samanantar",
+      "labse": 0.7999,
+      "en": "A large number of devotees visit this shrine on the occasion of an annual fair which is held on the festive occasion of Navratri",
+      "hi": "नवरात्रों में लगने वाले वार्षिक मेले में इस तीर्थस्थल पर बड़ी संख्या में भक्त आते हैं।"
+    },
+    {
+      "source": "samanantar",
+      "labse": 0.7999,
+      "en": "New Zealand wrapped up an impressive innings and 65-run victory over England shortly after tea on the final day of the first test at Bay Oval on Monday with Neil Wagner running through the tourists lower order.",
+      "hi": "तेज गेंदबाज नील वैगनर के पांच विकेट की बदौलत न्यूजीलैंड ने सोमवार को पहले टेस्ट के 5वें और अंतिम दिन इंग्लैंड को पारी और 65 रन से हरा दिया।"
+    },
+    {
+      "source": "samanantar",
+      "labse": 0.7999,
+      "en": "The region has excellent trekking trails and visitors need to trek about 6 km to reach the hilltop",
+      "hi": "इस क्षेत्र में उत्‍कृष्‍ट ट्रैकिंग ट्रेल्‍स हैं और पर्यटक यहां पर 6 किमी"
+    },
+    {
+      "source": "samanantar",
+      "labse": 0.7999,
+      "en": "Visitors can also enjoy the breathtaking views of the mighty Himalayan Ranges along with the Trishul Peak located at an elevation of 26,500 ft above sea level",
+      "hi": "यात्री यहां आकर समुद्र स्तर से 26,500 फुट की ऊंचाई पर स्थित त्रिशूल चोटी के साथ हिमालय की श्रेणियों के विस्मरयकारी नजारों का लुत्फ उठा सकते हैं।"
+    }
+  ],
+  "alignment_checked": true,
+  "final": {
+    "train": 13754,
+    "dev": 500,
+    "train_by_source": {
+      "samanantar": 9706,
+      "ilci": 4048
+    },
+    "dev_by_source": {
+      "ilci": 152,
+      "samanantar": 348
+    }
+  },
+  "examples": [
+    {
+      "source": "samanantar",
+      "en": "The train will be run by Indian Railway Catering & Tourism Corporation Limited ( IRCTC ), the tourism arm of Indian Railways.",
+      "hi": "इस ट्रेन को भारतीय रेलवे कैटरिंग एंड टूरिज्म ने एडवरटीजमेंट के तौर पर चलाना था।"
+    },
+    {
+      "source": "samanantar",
+      "en": "Tomb KV21 is located in the Valley of the Kings in Egypt.",
+      "hi": "मकबरा संख्या केवी 21 मिस्र में राजाओं की घाटी में स्थित है।"
+    },
+    {
+      "source": "samanantar",
+      "en": "Opposition parties are terming this move to rent out forts for heritage hotels and wedding venues as an insult to Chhatrapati Shivaji Maharaj and his followers.",
+      "hi": "विपक्षी नेताओं का कहना है कि धरोहर होटलों और विवाह स्थलों के लिए किलों को किराए पर देने की योजना छत्रपति शिवाजी महाराज और उनके समर्थकों का अपमान है।"
+    },
+    {
+      "source": "samanantar",
+      "en": ". City Palace is on the banks of the Lake Pichola, this is a magnificient and exciting citadel built with glass and smoked glass.",
+      "hi": "सिटी पैलेस पिछोला झील के किनारे पर स्थित है यह शीशे और कांच के कार्य से निर्मित एक भव्य और प्रेरणादायी गढ़ है।"
+    },
+    {
+      "source": "samanantar",
+      "en": "From the station, you can take a rickshaw to reach the temple",
+      "hi": "स्टेशन से रिक्शा लेकर मंदिर तक पहुंचा जा सकता है।"
+    },
+    {
+      "source": "ilci",
+      "en": "Martyr Minar , Old Palace , Museum , temple of Govindji and the lake of Vishnupur in Imphal are specially worth seeing .",
+      "hi": "इम्फाल में शहीद मीनार , पुराना महल , संग्रहालय , गोविंदजी का मंदिर व विष्‍णुपुर की झील विशेष रूप से देखने योग्य है ।"
+    },
+    {
+      "source": "samanantar",
+      "en": "\"I am friends with both Harbhajan and Yuvraj and whatever happened in Islamabad hotel room was a joke,\" Akhtar was quoted as saying by Geo news.",
+      "hi": "‘जियो न्यूज’ ‘की रिपोर्ट के अनुसार, शोएब ने कहा, “मैं हरभजन और युवराज दोनों का दोस्त हूं और इस्लामाबाद के होटल के कमरे में जो भी हुआ वह एक मजाक था।"
+    },
+    {
+      "source": "ilci",
+      "en": "Situated at the edge of Betwa river the Jahangir Mahal , Lakshminarayan temple , Rajmahal , Ram Raja temple and Chaturbhuj temple in Orcha Nagar are worth seeing .",
+      "hi": "बेतवा नदी के किनारे स्थित ओरछा नगर में जहाँगीर महल , लक्ष्मीनारायण मंदिर , राजमहल , राम राजा मंदिर एवं चतुर्भुज मंदिर देखने योग्य हैं ।"
+    },
+    {
+      "source": "samanantar",
+      "en": "New Delhi: The Indian Railway Catering and Tourism Corporation (IRCTC) offers a range of services through its e-ticketing website, www.irctc.co.in.",
+      "hi": "भारतीय रेलवे खानपान एवं पर्यटन निगम (IRCTC) अपनी ई-कैटरिंग को लोकप्रिय बनाने के लिए नया ऑफर लेकर आई है।"
+    },
+    {
+      "source": "samanantar",
+      "en": "Besides, local people will also get a chance to showcase their cuisine, folk culture and handicrafts.",
+      "hi": "इसके अतिरिक्त स्थानीय लोग क्षेत्र विशेष की संस्कृति और हस्तशिल्प को प्रदर्शित कर सकेंगे।"
+    }
+  ],
+  "flores_overlap_checked": true
+}

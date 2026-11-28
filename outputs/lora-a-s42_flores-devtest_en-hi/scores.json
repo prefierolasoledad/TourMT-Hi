@@ -1,0 +1,18 @@
+{
+  "run_name": "lora-a-s42_flores-devtest_en-hi",
+  "model": "ai4bharat/indictrans2-en-indic-dist-200M",
+  "test_set": "flores",
+  "split": "devtest",
+  "direction": "en-hi",
+  "n_sentences": 1012,
+  "normalization": "indicnlp-hi (nukta + alternative forms)",
+  "chrF++": 58.24,
+  "BLEU": 35.81,
+  "chrf_signature": "nrefs:1|case:mixed|eff:yes|nc:6|nw:2|space:no|version:2.6.0",
+  "bleu_signature": "nrefs:1|case:mixed|eff:no|tok:13a|smooth:exp|version:2.6.0",
+  "COMET": 0.8086,
+  "CometKiwi": 0.8448,
+  "comet_model": "Unbabel/wmt22-comet-da",
+  "kiwi_model": "Unbabel/wmt22-cometkiwi-da",
+  "evaluated_at": "2026-11-28 03:49:52"
+}
